@@ -8,10 +8,12 @@ from clients.neo4j_client import Neo4jClient
 from clients.prometheus_client import PrometheusClient
 from clients.shell_client import ShellClient
 from services.metrics_service import MetricsService
+from services.shell_service import ShellService
 from services.topology_service import TopologyService
 from services.trace_service import TraceService
 from clients.base_k8s_client import BaseK8sClient
 from services.logs_service import LogsService
+from services.shell_service import ShellService
 
 
 @lru_cache(maxsize=1)
@@ -64,6 +66,12 @@ def get_shell_client() -> ShellClient:
         timeout_seconds=settings.shell_timeout_seconds,
     )
 
+@lru_cache(maxsize=1)
+def get_shell_service() -> ShellService:
+    return ShellService(
+        shell_client=get_shell_client(),
+    )
+
 
 @lru_cache(maxsize=1)
 def get_trace_service() -> TraceService:
@@ -95,4 +103,10 @@ def get_metrics_service() -> MetricsService:
 def get_logs_service() -> LogsService:
     return LogsService(
         k8s_client=get_k8s_client(),
+    )
+
+@lru_cache(maxsize=1)
+def get_shell_service() -> ShellService:
+    return ShellService(
+        shell_client=get_shell_client(),
     )
