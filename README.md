@@ -96,40 +96,119 @@ PROMETHEUS_URL=http://localhost:9090
 If Prometheus is running inside your cluster, you can expose it with kubectl port-forward.
 
 
-## Features
+# Available Tools
 
-### Topology
-- Cluster overview of pods and services
-- Resolve service -> pods
-- Resolve pod -> services
-- Service dependency queries from Neo4j
-- Service neighborhood map from Neo4j
-- Combined runtime + graph topology summary
+This document lists the tools currently exposed by the `Kubernetes-Mcp` server, grouped by capability.
 
-### Metrics
-- Pod metrics from Prometheus
-- Service metrics aggregated from pod metrics
-- Pod time-range metrics
-- Service time-range metrics
-- Pod triage metrics
-- Service triage metrics
+## Backend / system health
 
-### Logs
-- Read pod logs
-- Read service logs across all selected pods
-- Important-line filtering
-- Pod log summaries
-- Service log summaries
+- `get_backend_status`  
+  Returns availability and configuration status for Kubernetes, Prometheus, Jaeger, and Neo4j.
 
-### Traces
-- Trace summaries from Jaeger
-- Trace details by trace ID
-- Error-focused trace inspection
+## Kubernetes topology / cluster structure
 
-### Shell
-- Restricted shell execution
-- Restricted kubectl execution
-- Safe command policy inspection
+- `get_cluster_overview(namespace: str | None = None)`  
+  Returns a namespace overview of pods and services.
+
+- `get_pods_from_service(service_name: str, namespace: str | None = None)`  
+  Returns the pods selected by a Kubernetes Service.
+
+- `get_services_from_pod(pod_name: str, namespace: str | None = None)`  
+  Returns the Services that select a given Pod.
+
+## Neo4j dependency / topology graph
+
+- `get_service_dependencies(service_name: str)`  
+  Returns direct service dependencies from Neo4j.
+
+- `get_services_used_by(service_name: str)`  
+  Returns services that depend on the given service.
+
+- `get_service_map(service_name: str, depth: int = 2)`  
+  Returns a bounded dependency neighborhood around a service.
+
+- `get_service_topology_summary(service_name: str, namespace: str | None = None, depth: int = 2)`  
+  Returns a combined runtime + graph topology summary for a service.
+
+## Logs
+
+- `get_pod_logs(pod_name: str, namespace: str | None = None, tail_lines: int = 200, important_only: bool = True)`  
+  Returns pod logs.
+
+- `get_service_logs(service_name: str, namespace: str | None = None, tail_lines_per_pod: int = 200, important_only: bool = True)`  
+  Returns logs for all pods behind a service.
+
+- `summarize_pod_logs(pod_name: str, namespace: str | None = None, tail_lines: int = 200)`  
+  Returns a compact summary of pod logs.
+
+- `summarize_service_logs(service_name: str, namespace: str | None = None, tail_lines_per_pod: int = 200)`  
+  Returns a compact summary of service logs.
+
+## Metrics
+
+- `get_pod_metrics(pod_name: str, namespace: str | None = None)`  
+  Returns pod metrics.
+
+- `get_service_metrics(service_name: str, namespace: str | None = None)`  
+  Returns service metrics.
+
+- `get_pod_triage_metrics(pod_name: str, namespace: str | None = None)`  
+  Returns cheaper triage-focused metrics for a pod.
+
+- `get_service_triage_metrics(service_name: str, namespace: str | None = None)`  
+  Returns cheaper triage-focused metrics for a service.
+
+## Traces
+
+- `get_trace_summaries(service_name: str, limit: int = 20, lookback: str = "15m", min_duration_ms: float | None = None, only_errors: bool = False)`  
+  Returns summarized traces for a service.
+
+- `get_trace_details(trace_id: str)`  
+  Returns detailed information for a specific trace.
+
+## Shell / kubectl
+
+- `exec_shell(command: str)`  
+  Executes a restricted shell command.
+
+- `exec_kubectl(command: str)`  
+  Executes a kubectl-only command.
+
+- `get_shell_policy()`  
+  Returns the active shell execution policy.
+
+## Current backend-aware usage guidance
+
+### Safe baseline tools
+These are the safest starting tools in most runs:
+
+- `get_backend_status`
+- `get_cluster_overview`
+- `get_pods_from_service`
+- `get_services_from_pod`
+
+### Use only when backend is available
+
+- Prometheus-dependent:
+  - `get_pod_metrics`
+  - `get_service_metrics`
+  - `get_pod_triage_metrics`
+  - `get_service_triage_metrics`
+
+- Jaeger-dependent:
+  - `get_trace_summaries`
+  - `get_trace_details`
+
+- Neo4j-dependent:
+  - `get_service_dependencies`
+  - `get_services_used_by`
+  - `get_service_map`
+  - `get_service_topology_summary`
+
+### Use carefully
+
+- `exec_shell`
+- `exec_kubectl`
 
 ---
 
